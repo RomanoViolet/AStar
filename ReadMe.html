@@ -1,0 +1,201 @@
+<p>A* Search</p>
+<p></p>
+<p></p>
+<p>Problem Statement</p>
+<p>Given</p>
+<ol style="list-style-type: decimal">
+<li>A map “assets/elevation.data” which provides the elevation of each point on the map at a pixel resolution;</li>
+<li>A set of no-go areas “assets/overrides.data”, i.e., locations which are not driveable such as rivers or marshes;</li>
+<li><p>Three locations on the map:</p>
+<ol style="list-style-type: decimal">
+<li>Initial location of the vehicle (i.e., Location A);</li>
+<li>First location of interest which the vehicle must drive to (i.e., Location B)</li>
+<li>Second location of interest which the vehicle must drive to <em>from </em>A (i.e., Location C)</li>
+<li>That is: Requested Journey: A → B → C</li>
+</ol></li>
+</ol>
+<p>Find</p>
+<ol style="list-style-type: decimal">
+<li>The shortest driveable path to go from A → B → C;</li>
+<li>Time required to drive along such a path in nominal time</li>
+<li>Total distance travelled along A → B → C in nominal terms.</li>
+</ol>
+<p></p>
+<p>Assume:</p>
+<ol style="list-style-type: decimal">
+<li>The vehicle “rover” can travel 1 unit (specifically, 1 pixel) in 1 unit of time</li>
+<li>The vehicle “rover” can only travel (a) forward (b) reverse (c) along diagnals</li>
+<li>The vehicle’s “rover’s”engine produces constant power.</li>
+</ol>
+<p></p>
+<p>Optimize:</p>
+<ol style="list-style-type: decimal">
+<li>Time to search the path;</li>
+<li>Distance travelled and corresponding time required.</li>
+</ol>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p>Summary of Solution</p>
+<p></p>
+<p><strong>Algorithm Used:</strong> A*</p>
+<p><strong>Heuristics:</strong> Euclidean Measure</p>
+<p>Wallclock Time:~7.16s. Measured only for computing all paths. Details below.</p>
+<p>RAM Usage:Depends on the architecture of the target processor.</p>
+<p></p>
+<p>A summary of computation is provided at the terminal like so:</p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p>Note</p>
+<ol style="list-style-type: decimal">
+<li>The time reported in the summary is the ‘nominal-time’ as mentioned in the problem statement (i.e., reported travel time is normalized to ‘island-time’)</li>
+<li>The distance is reported in terms of ‘nominal-units’ as mentioned in the problem statement.</li>
+<li>The reported computation time is for a tunable parameter “weight” set to 1.0 (from rover’s initial location to the location of the bachelor, and 10.0 for the path between the bachelor’s location to the wedding). See the section of Heuristics for more details. Weights greater than 1.0 leads to increasingly suboptimal paths (i.e., A* optimality guarantee is violated increasingly), but decrease computation time.</li>
+<li>The final path also depends on the regions prohibited from travel, as decided by the masks (e.g., OF_WATER_BASIN) as provided in the setup.</li>
+</ol>
+<p></p>
+<p></p>
+<p></p>
+<p>Design Overview</p>
+<p><strong>Entry Point for Execution:</strong> main.cpp</p>
+<p></p>
+<p>Step 1</p>
+<p>Loading of Elevation and Override data is performed in parallel in order to reduce the overall computation time:</p>
+<p></p>
+<p></p>
+<p>Step 2</p>
+<p>The following paths are computed in parallel:</p>
+<ol style="list-style-type: decimal">
+<li>From Rover’s initial location to the location of the bachelor;</li>
+<li><p>From the location of the bachelor to the location of the wedding</p>
+<p></p></li>
+</ol>
+<p></p>
+<p>Step 3</p>
+<p>The overall time to compute the paths is estimated by a call to chrono library like so:</p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p>(before launching the first thread that computes the path from the Rover’s initial location to the location of the bachelor.</p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p>The overall time required to compute the paths is then deduced like so:</p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p>Detailed Design</p>
+<p>Attempt was made to keep the overall solution as modular as possible.</p>
+<p>Specifically:</p>
+<p></p>
+<ol style="list-style-type: decimal">
+<li>The call to the solver is made in “main.cpp” by launching the “SearchPath” function with the necessary paramters. See “SearchPath.hpp” for more details about parameters.</li>
+<li>The “SearchPath” itself uses the class “Astar” for computing the paths. See “AStar.hpp” for details about the class.</li>
+</ol>
+<p></p>
+<p>Therefore, the “SearchPath” function wrapper encapsulates the core A* algorithm, enabling simultaneous searches for multiple paths, as implemented in this project.</p>
+<p></p>
+<p>Overview of Software Components</p>
+<p></p>
+<ol style="list-style-type: decimal">
+<li><em><strong>Wrapper “SearchPath” </strong></em>encapsulates the A* path search algorithm, and initializes a Astar object with the necessary parameters. See the “SearchPath.hpp” for details.</li>
+<li>Class AStar: Provides the core functions required to perform path search using A* heuristic. The choice of A* was motivated by Sebastian Thrun’s lecture in the third semester of “Self-Driving Car Nano-Degree Program”, and by the fact that the algorithm was successfully deployed on “Junior” autonomous vehicle from Stanford University in DARPA’s Urban Challenge. See “AStar.hpp” for details on the class itself. </li>
+<li>Class “Node”: Provides a convenient abstraction to express the location on the map. Currently supports only two coordinates &lt;x,y&gt;. Provides necessary operators (e.g., equality) to compare locations, as required by the A* algorithm.</li>
+<li>Class Heuristics: Provides functions that may be used to compute the heuristic (“h”) as required by the A* algorithm. Currently, only Euclidean Distance measure is provided. All algorithms are required to be optimistic (i.e., never overestimate the true distance between two points) by A*. Therefore, it is possible to just recompute paths using a different heuristic cost function without requiring any modifications to either the wrapper “SearchPath”, or the core class “Astar”.</li>
+<li>Class CostGrid: Templated class provding matrix-like abstraction, together with convenient access functions. Used by “Astar” to store various data.</li>
+<li>Various Unit Tests as part of the development process.</li>
+</ol>
+<p></p>
+<p></p>
+<p>Execution</p>
+<ol style="list-style-type: decimal">
+<li><strong>Parallelism: </strong>Search for paths from Rover’s initial position to the location of the bachelor, and from the location of the bachelor to the location of the wedding are computed in parallel.</li>
+<li><strong>Parallelism: </strong>Search for all explorable neighbors are also in parallel:</li>
+</ol>
+<p></p>
+<p></p>
+<p>Tunables</p>
+<p></p>
+<ol style="list-style-type: decimal">
+<li><p>Weight: A tunable parameter “weight” is introduced which forces the path-search to possibly select less favorable paths but with reduced computation time. The provided implementation has:</p>
+<ol style="list-style-type: decimal">
+<li>Weight = 1.0, for estimating the path between Rover’s initial position to the location of the bachelor;</li>
+<li>Weight = 10.0, for estimating the path between the location of the bachelor and the wedding. </li>
+<li>With these weights, the computation time is 65.61 seconds, compared to ~7 seconds when weights are kept as 100.0 for both path searches.</li>
+</ol></li>
+</ol>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<ol style="list-style-type: decimal">
+<li><p>Mask: The choice of regions where the Rover is prohibited can be supplied by setting the mask like so in main.cpp:</p>
+<p></p></li>
+</ol>
+<p></p>
+<p></p>
+<p></p>
+<p>Heuristics</p>
+<ol style="list-style-type: decimal">
+<li>Distance Estimation: Once the final path is computed as a sequence of coordinates, the total distance is estimated by adding the Euclidean distance between two successive coordinates, and accumulating the distance.</li>
+<li><p>Time Estimation:The following heuristic is followed:</p>
+<ol style="list-style-type: decimal">
+<li>For movement between two points on the map with no net change in elevation: t = d (island-seconds), where d is the island-distance travelled.</li>
+<li>For movement between two points on the map with a net change in elevation of <em>h, </em>t = d/(1-sin(θ)), where θ = tan<sup>-1</sup>(h/d). This heuristic assumes that the force generated by the Rover’s engine remains constant throughout the journey. The scaling factor of   1-sin(θ) is based on the notion that effective force when going up an elevation with grade θ is F.sin(θ), where F is the constant force generated by the Rover’s engines.</li>
+</ol></li>
+</ol>
+<p></p>
+<p>Notes</p>
+<p></p>
+<ol style="list-style-type: decimal">
+<li>By intent,the time required to transform the path computed by AStar class to the format suitable for use with the visualizer is not counted, as this step does not form a core of the path-search. The provided transformation steps in “main.cpp” are mainly done to reduce the overall time to print the final bitmap.</li>
+<li>The A* algorithm is described in Semester 3 of “Self Driving Car Nano-Degree Program”.</li>
+</ol>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p>Final Result</p>
+<p>(Provided for reference. Generated by the executable)</p>
+<p>Related Summary:</p>
+<p></p>
+<p>Trip                                   Distance Time     </p>
+<p>Rover to Bachelor                      2508.59  3240.93  </p>
+<p>Bachelor to Wedding                    1760.88  2287.81  </p>
+<p></p>
+<p>Total Wallclock Time Required for Computation: 221.87 s.</p>
+<p>Corresponding weights:</p>
+<p>1. weight: 1.0: Rover’s Initial Position to the Bachelor’s Location</p>
+<p>2. weight: 10.0: Bachelor’s location to the location of the wedding.</p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>

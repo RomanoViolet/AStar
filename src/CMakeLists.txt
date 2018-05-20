@@ -1,0 +1,5 @@
+FILE(GLOB CPPSources *.cpp)
+#add_library (core ${CPPSources})
+add_library(src ${CPPSources})
+target_include_directories (src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+#target_link_libraries(Bachelor src)
