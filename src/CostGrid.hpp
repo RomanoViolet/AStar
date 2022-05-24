@@ -11,6 +11,7 @@
 #include <valarray>
 #include <stdexcept>
 #include <cassert>
+#include <vector>
 
 //http://www.cs.technion.ac.il/users/yechiel/c++-faq/matrix-subscript-op.html
 //http://www.learncpp.com/cpp-tutorial/99-overloading-the-parenthesis-operator/
